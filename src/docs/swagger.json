@@ -1,0 +1,176 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Payment API Documentation",
+        "title": "Payment API",
+        "contact": {},
+        "version": "1.0.0-Beta"
+    },
+    "paths": {
+        "/transfer": {
+            "post": {
+                "description": "Create Transfer With Hardcoded Merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Create Transfer",
+                "parameters": [
+                    {
+                        "description": "Create Transaction",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/httppayload.TransferRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/httppayload.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/httppayload.TransferResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "httppayload.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {},
+                "message": {
+                    "type": "string",
+                    "default": "berhasil"
+                },
+                "meta": {
+                    "$ref": "#/definitions/httppayload.MetaResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "httppayload.MetaResponse": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "default": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "default": 1
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 100
+                },
+                "next_page": {
+                    "type": "integer",
+                    "default": 2
+                },
+                "previous_page": {
+                    "type": "integer",
+                    "default": 0
+                },
+                "total_data": {
+                    "type": "integer",
+                    "default": 100
+                }
+            }
+        },
+        "httppayload.TransferRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "bank_code",
+                "beneficiary_account",
+                "beneficiary_name"
+            ],
+            "properties": {
+                "amount": {
+                    "description": "must be \u003e 0",
+                    "type": "number"
+                },
+                "bank_code": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 1
+                },
+                "beneficiary_account": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "beneficiary_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "note": {
+                    "description": "optional",
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "httppayload.TransferResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_code": {
+                    "type": "string"
+                },
+                "beneficiary_account": {
+                    "type": "string"
+                },
+                "beneficiary_name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

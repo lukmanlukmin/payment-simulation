@@ -1,0 +1,119 @@
+definitions:
+  httppayload.BaseResponse:
+    properties:
+      data: {}
+      error: {}
+      message:
+        default: berhasil
+        type: string
+      meta:
+        $ref: '#/definitions/httppayload.MetaResponse'
+      success:
+        type: boolean
+    type: object
+  httppayload.MetaResponse:
+    properties:
+      current_page:
+        default: 1
+        type: integer
+      last_page:
+        default: 1
+        type: integer
+      limit:
+        default: 100
+        type: integer
+      next_page:
+        default: 2
+        type: integer
+      previous_page:
+        default: 0
+        type: integer
+      total_data:
+        default: 100
+        type: integer
+    type: object
+  httppayload.TransferRequest:
+    properties:
+      amount:
+        description: must be > 0
+        type: number
+      bank_code:
+        maxLength: 20
+        minLength: 1
+        type: string
+      beneficiary_account:
+        maxLength: 50
+        minLength: 1
+        type: string
+      beneficiary_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      note:
+        description: optional
+        maxLength: 255
+        type: string
+    required:
+    - amount
+    - bank_code
+    - beneficiary_account
+    - beneficiary_name
+    type: object
+  httppayload.TransferResponse:
+    properties:
+      amount:
+        type: number
+      bank_code:
+        type: string
+      beneficiary_account:
+        type: string
+      beneficiary_name:
+        type: string
+      note:
+        type: string
+      status:
+        type: string
+      transaction_id:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Payment API Documentation
+  title: Payment API
+  version: 1.0.0-Beta
+paths:
+  /transfer:
+    post:
+      consumes:
+      - application/json
+      description: Create Transfer With Hardcoded Merchant
+      parameters:
+      - description: Create Transaction
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/httppayload.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httppayload.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/httppayload.TransferResponse'
+              type: object
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Create Transfer
+      tags:
+      - Transaction
+schemes:
+- http
+- https
+swagger: "2.0"

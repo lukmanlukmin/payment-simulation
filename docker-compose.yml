@@ -1,0 +1,155 @@
+version: '3.0'
+services:
+  doitpay-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.go.1.23
+    working_dir: /home/golang/src
+    container_name: doitpay-api
+    depends_on:
+      - doitpay-kafka
+      - doitpay-postgresql
+    volumes:
+      - ~/.ssh:/root/.ssh
+      - ./src:/home/golang/src
+    ports:
+      - 8080:80
+    networks:
+      - doitpay-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'run-http' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: make run-http
+  
+  doitpay-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.go.1.23
+    working_dir: /home/golang/src
+    container_name: doitpay-worker
+    depends_on:
+      - doitpay-kafka
+      - doitpay-postgresql
+    volumes:
+      - ~/.ssh:/root/.ssh
+      - ./src:/home/golang/src
+    networks:
+      - doitpay-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'run-worker' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: make run-worker
+
+  doitpay-postgresql:
+    image: bitnami/postgresql:13
+    container_name: 'doitpay-postgresql'
+    environment:
+      - POSTGRESQL_USERNAME=doitpayuser
+      - POSTGRESQL_PASSWORD=doitpaypassword
+      - POSTGRESQL_DATABASE=transfer_db
+    ports:
+      - 5432:5432
+    volumes:
+      - doitpay-postgresql-vol:/bitnami/postgresql
+    networks:
+      - doitpay-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
+  doitpay-zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: doitpay-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - doitpay-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  doitpay-kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: doitpay-kafka
+    depends_on:
+      - doitpay-zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: doitpay-zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://doitpay-kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "true"
+    networks:
+      - doitpay-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  doitpay-kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: doitpay-kafka-ui
+    depends_on:
+      - doitpay-kafka
+    ports:
+      - "8082:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=doitpay-kafka:9092
+    networks:
+      - doitpay-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+  
+  doitpay-k6:
+    image: grafana/k6
+    container_name: k6
+    volumes:
+      - ./k6-scripts:/scripts    
+    networks:
+      - doitpay-network   # taro script load test di folder lokal ./k6-scripts
+    depends_on:
+      doitpay-api:
+        condition: service_healthy
+
+volumes:
+  doitpay-postgresql-vol:
+    driver: local
+
+networks:
+  doitpay-network:
+    driver: bridge

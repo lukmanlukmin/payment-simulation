@@ -3,8 +3,8 @@ import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
 
 export const options = {
-  vus: 10,
-  duration: '30s',
+  vus: 50,
+  duration: '60s',
 };
 
 // bikin counter per status

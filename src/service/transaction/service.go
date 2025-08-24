@@ -1,6 +1,8 @@
 // Package transaction ...
 package transaction
 
+//go:generate mockgen -source=service.go -destination=mocks/service_mock.go -package=mocks
+
 import (
 	"context"
 	"payment-simulation/bootstrap/repository"

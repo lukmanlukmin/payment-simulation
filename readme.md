@@ -28,7 +28,7 @@ Make sure you have installed:
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Running the Project without Tests
-To start the project and run the load tests:
+To start the project
 
 ```bash
 docker-compose up
